@@ -3,17 +3,19 @@
 ###########
 FROM node:18-slim AS builder
 
-# 1. Set WORKDIR first
 WORKDIR /app
 
-# 2. Copy only package files for better caching
+# Copy only the files needed for installation first
 COPY package.json package-lock.json ./
 
-# 3. Install dependencies
-RUN npm ci
+# FIX: Switch to 'npm install' for better compatibility in CI/CD 
+# OR ensure npm is updated to match your local version
+RUN npm install
 
-# 4. Copy source and build
+# Copy the rest of your frontend source code
 COPY . .
+
+# Build the project
 RUN npm run build
 
 #########
@@ -21,14 +23,13 @@ RUN npm run build
 #########
 FROM nginx:stable-alpine
 
-# Fix: Vite builds to 'dist', Create React App builds to 'build'
-# Change 'dist' to 'build' ONLY if you are not using Vite.
+# FIX: Vite defaults to 'dist'. If using Create React App, change to 'build'
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Clean up default config
+# Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy your custom config
+# Copy your local config (Matches your sidebar path: frontend/nginx/nginx.conf)
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
