@@ -27,7 +27,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements/local.txt
-          # python manage.py test  <-- Uncomment to execute backend tests
+          python manage.py test  
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,7 +38,7 @@ jobs:
         run: |
           cd frontend
           npm install
-          # npm test -- --watchAll=false  <-- Uncomment to execute frontend tests
+          npm test -- --watchAll=false  
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
