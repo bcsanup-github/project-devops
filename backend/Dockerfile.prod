@@ -26,11 +26,15 @@ RUN useradd -ms /bin/bash app
 WORKDIR /home/app/web
 
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    netcat-openbsd libpq5 && \
-    rm -rf /var/lib/apt/lists/*
+# Add this to your BACKEND Dockerfile before running pip install
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/src/app/wheels /wheels
+# Then run your install command
+RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache /wheels/*
 
 # 2. Use --chown during COPY for speed and permissions
