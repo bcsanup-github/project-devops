@@ -8,19 +8,37 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Fix: Use build-essential for Debian Bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-dev \
-    gcc \
-    build-essential \
-    libffi-dev \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    gcc python3-dev build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
-
-# Fix: Copy requirements FIRST for better caching
+# 1. Copy requirements FIRST for caching
 COPY ./requirements ./requirements
-
-# Build wheels
+RUN pip install --upgrade pip
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements/production.txt
+
+#########
+# FINAL #
+#########
+FROM python:3.11-slim-bookworm
+
+RUN useradd -ms /bin/bash app
+WORKDIR /home/app/web
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd libpq5 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/src/app/wheels /wheels
+RUN pip install --no-cache /wheels/*
+
+# 2. Use --chown during COPY for speed and permissions
+COPY --chown=app:app . .
+
+# 3. Ensure the script is executable
+RUN chmod +x /home/app/web/entrypoint.prod.sh
+
+USER app
+
+ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
