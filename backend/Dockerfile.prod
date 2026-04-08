@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Then run your install command
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements/production.txt
 RUN pip install --no-cache /wheels/*
 
 # 2. Use --chown during COPY for speed and permissions
