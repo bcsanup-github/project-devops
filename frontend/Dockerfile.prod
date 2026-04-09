@@ -1,21 +1,22 @@
 ###########
 # BUILDER #
 ###########
-FROM node:18-slim AS builder
+# 1. Change from node:18 to node:16
+FROM node:16-slim AS builder
 
 WORKDIR /app
 
-# Set CI to false so that warnings don't break your college project build
+# 2. Keep this to ignore warnings
 ENV CI=false
 
 COPY package.json package-lock.json ./
 
-# Use --legacy-peer-deps to ignore version conflicts between packages
+# 3. Use 'install' with the legacy flag to skip version arguments
 RUN npm install --legacy-peer-deps
 
 COPY . .
 
-# Run build (CI=false ensures it finishes even with minor code warnings)
+# 4. Run the build
 RUN npm run build
 
 #########
@@ -23,10 +24,7 @@ RUN npm run build
 #########
 FROM nginx:stable-alpine
 
-# SAFETY CHECK: 
-# If you used 'npm create vite', your folder is /app/dist
-# If you used 'npx create-react-app', your folder is /app/build
-# This line tries to copy /dist; if it fails, try changing 'dist' to 'build' below.
+# Double-check: if this fails, try changing 'dist' to 'build'
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 RUN rm /etc/nginx/conf.d/default.conf
