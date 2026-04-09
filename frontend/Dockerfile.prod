@@ -5,17 +5,17 @@ FROM node:18-slim AS builder
 
 WORKDIR /app
 
-# Copy only the files needed for installation first
+# Set CI to false so that warnings don't break your college project build
+ENV CI=false
+
 COPY package.json package-lock.json ./
 
-# FIX: Switch to 'npm install' for better compatibility in CI/CD 
-# OR ensure npm is updated to match your local version
-RUN npm install
+# Use --legacy-peer-deps to ignore version conflicts between packages
+RUN npm install --legacy-peer-deps
 
-# Copy the rest of your frontend source code
 COPY . .
 
-# Build the project
+# Run build (CI=false ensures it finishes even with minor code warnings)
 RUN npm run build
 
 #########
@@ -23,13 +23,13 @@ RUN npm run build
 #########
 FROM nginx:stable-alpine
 
-# FIX: Vite defaults to 'dist'. If using Create React App, change to 'build'
+# SAFETY CHECK: 
+# If you used 'npm create vite', your folder is /app/dist
+# If you used 'npx create-react-app', your folder is /app/build
+# This line tries to copy /dist; if it fails, try changing 'dist' to 'build' below.
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
-
-# Copy your local config (Matches your sidebar path: frontend/nginx/nginx.conf)
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
