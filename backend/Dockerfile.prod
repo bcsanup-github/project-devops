@@ -1,48 +1,30 @@
-###########
-# BUILDER #
-###########
-FROM python:3.11-slim-bookworm AS builder
+# 1. Use a standard Python image
+FROM python:3.11-slim
 
-WORKDIR /usr/src/app
-
+# 2. Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc python3-dev build-essential libpq-dev && \
-    rm -rf /var/lib/apt/lists/*
+# 3. Set the working directory inside the container
+WORKDIR /app
 
-# 1. Copy requirements FIRST for caching
-COPY ./requirements ./requirements/
-RUN pip install --upgrade pip
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements/production.txt
-
-#########
-# FINAL #
-#########
-FROM python:3.11-slim-bookworm
-
-RUN useradd -ms /bin/bash app
-WORKDIR /home/app/web
-
-# Install runtime dependencies only
-# Add this to your BACKEND Dockerfile before running pip install
+# 4. Install system dependencies (CRITICAL for PostgreSQL/psycopg2)
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Then run your install command
+# 5. Copy the requirements folder from your computer to the container
+# This ensures 'requirements/production.txt' actually exists for pip to find
+COPY requirements/ ./requirements/
+
+# 6. Install the Python dependencies
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements/production.txt
-RUN pip install --no-cache /wheels/*
 
-# 2. Use --chown during COPY for speed and permissions
-COPY --chown=app:app . .
+# 7. Copy the rest of your backend code
+COPY . .
 
-# 3. Ensure the script is executable
-RUN chmod +x /home/app/web/entrypoint.prod.sh
-
-USER app
-
-ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
+# 8. Run the application (Make sure this path matches your project!)
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
