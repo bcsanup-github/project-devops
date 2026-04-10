@@ -11,7 +11,6 @@ jobs:
     name: Build, Test, and SonarCloud Scan
     runs-on: ubuntu-latest
 
-    # ── Postgres is needed because Django connects to it during tests ──
     services:
       postgres:
         image: postgres:13.2-alpine
@@ -28,13 +27,11 @@ jobs:
           --health-retries 5
 
     steps:
-      # ── 1. Checkout (fetch-depth:0 required by SonarCloud) ──
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ── 2. Python + Django tests ──
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -62,11 +59,10 @@ jobs:
           DATABASE: postgres
         run: python manage.py test
 
-      # ── 3. Node + React tests ──
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"   # matches your Dockerfile.prod (node:18-slim)
+          node-version: "18"
 
       - name: Install Frontend Dependencies & Test
         working-directory: frontend
@@ -74,17 +70,35 @@ jobs:
           npm install
           npm test -- --watchAll=false --passWithNoTests
 
-      # ── 4. SonarCloud scan ──
-      # SONAR_TOKEN: go to sonarcloud.io → My Account → Security → Generate Token
-      # Then: GitHub repo → Settings → Secrets and variables → Actions → New secret
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # free, auto-provided by GitHub, no setup needed
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # one-time setup on SonarCloud (see above)
-        # All other config (projectKey, org, sources, exclusions)
-        # is already in your sonar-project.properties at repo root ✅
-      - name: Deploy and Debug
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: build-test-analyze  # Only runs if tests pass
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # --- STEP 1: UPLOAD FILES ---
+      - name: Copy Files to AWS Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_SSH_KEY }}
+          # List all files/folders needed for production
+          source: "docker-compose.prod.yml,nginx/" 
+          target: "/home/ubuntu/"
+
+      # --- STEP 2: RUN COMMANDS ---
+      - name: Execute Deployment Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.AWS_HOST }}
@@ -92,7 +106,9 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu
+            # Pull new images from Docker Hub
             sudo docker compose -f docker-compose.prod.yml pull
+            # Restart containers in detached mode
             sudo docker compose -f docker-compose.prod.yml up -d
             echo "--- DOCKER STATUS ---"
             sudo docker ps
