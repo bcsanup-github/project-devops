@@ -84,3 +84,17 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # one-time setup on SonarCloud (see above)
         # All other config (projectKey, org, sources, exclusions)
         # is already in your sonar-project.properties at repo root ✅
+      - name: Deploy and Debug
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            cd /home/ubuntu
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml up -d
+            echo "--- DOCKER STATUS ---"
+            sudo docker ps
+            echo "--- RECENT LOGS ---"
+            sudo docker compose -f docker-compose.prod.yml logs --tail=20
