@@ -3,3 +3,13 @@ npm-debug.log
 build
 .git
 *.md
+.git
+.github
+__pycache__
+*.pem
+.terraform
+terraform
+ansible
+README.md
+docker-compose.yml
+docker-compose.prod.yml
