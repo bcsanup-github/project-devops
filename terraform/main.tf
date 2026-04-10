@@ -66,13 +66,13 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# 7. The EC2 Instance (The actual server)
+# 7. The EC2 Instance The actual server
 resource "aws_instance" "devops_server" {
-  ami           = "ami-007020fd9c84e18c7" # Ubuntu 22.04 LTS in ap-south-1
-  instance_type = "t2.micro"             # Free Tier eligible
+  ami           = "ami-007020fd9c84e18c7" 
+  instance_type = "t2.micro"             
   subnet_id     = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
-  key_name      = "my-key" # MAKE SURE YOU HAVE THIS KEY NAME IN AWS
+  key_name      = "my-key" 
 
   tags = { Name = "DevOps-Project-Server" }
 }
