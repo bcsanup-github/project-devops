@@ -1,6 +1,6 @@
 ---
 - name: Configure AWS Server for DevOps Project
-  hosts: aws_servers
+  hosts: all
   become: yes
   tasks:
     - name: Update apt and install dependencies
@@ -11,6 +11,7 @@
           - ca-certificates
           - curl
           - software-properties-common
+          - gnupg
         state: present
 
     - name: Add Docker GPG key
@@ -20,16 +21,17 @@
 
     - name: Add Docker Repository
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
         state: present
 
-    - name: Install Docker Engine
+    - name: Install Docker Engine and Compose Plugin
       apt:
-        name: docker-ce
+        name:
+          - docker-ce
           - docker-ce-cli
           - containerd.io
           - docker-buildx-plugin
-          - docker-compose-plugin 
+          - docker-compose-plugin
         state: present
         update_cache: yes
 
@@ -44,3 +46,6 @@
         name: ubuntu
         groups: docker
         append: yes
+
+    - name: Reset connection so group changes take effect
+      meta: reset_connection
