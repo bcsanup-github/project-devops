@@ -40,7 +40,7 @@ jobs:
       - name: Install Backend Dependencies
         working-directory: backend
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements/local.txt
 
       - name: Run Django Tests
@@ -76,29 +76,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+
+  configure-server:
+    name: Configure Server (Ansible)
+    runs-on: ubuntu-latest
+    needs: build-test-analyze  # This ensures Ansible ONLY runs if the tests pass
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Ansible Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          echo "${{ secrets.AWS_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          # Standardized to use AWS_HOST secret
+          ansible-playbook -i '${{ secrets.AWS_HOST }},' -u ubuntu --private-key private_key.pem ansible/playbook.yml
+
+
   deploy:
     name: Deploy to AWS
     runs-on: ubuntu-latest
-    needs: build-test-analyze  # Only runs if tests pass
+    needs: [build-test-analyze, configure-server]  # Waits for BOTH tests and Ansible to finish successfully
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- STEP 1: UPLOAD FILES ---
       - name: Copy Files to AWS Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.AWS_HOST }}
           username: ubuntu
           key: ${{ secrets.AWS_SSH_KEY }}
-          # List all files/folders needed for production
           source: "docker-compose.prod.yml,nginx/" 
           target: "/home/ubuntu/"
 
-      # --- STEP 2: RUN COMMANDS ---
-      - name: Execute Deployment Commands via SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.AWS_HOST }}
@@ -106,11 +122,6 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu
-            # Pull new images from Docker Hub
+            # Using sudo so Docker doesn't throw permission errors
             sudo docker compose -f docker-compose.prod.yml pull
-            # Restart containers in detached mode
             sudo docker compose -f docker-compose.prod.yml up -d
-            echo "--- DOCKER STATUS ---"
-            sudo docker ps
-            echo "--- RECENT LOGS ---"
-            sudo docker compose -f docker-compose.prod.yml logs --tail=20
