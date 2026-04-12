@@ -3,6 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
+    container_name: ubuntu-db-1
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -14,6 +15,10 @@ services:
 
   backend:
     image: sanupdocker/my-devops-backend:latest
+    container_name: ubuntu-backend-1
+    # FIX 1: Map the port so AWS can talk to the container
+    ports:
+      - "8000:8000"
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
@@ -21,11 +26,14 @@ services:
       - db
     environment:
       - DATABASE_URL=postgres://postgres:postgres_password@db:5432/django_db
+      # FIX 2: Tell Django it's okay to receive requests from your Elastic IP
+      - DJANGO_ALLOWED_HOSTS=3.6.234.241 localhost 127.0.0.1
     networks:
       - prod
 
   frontend:
     image: sanupdocker/my-devops-frontend:latest
+    container_name: ubuntu-frontend-1
     ports:
       - "80:80"
     depends_on:
@@ -33,9 +41,9 @@ services:
     networks:
       - prod
 
-  # --- MONITORING SERVICES ---
   prometheus:
     image: prom/prometheus:latest
+    container_name: ubuntu-prometheus-1
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -46,6 +54,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    container_name: ubuntu-grafana-1
     volumes:
       - grafana_data:/var/lib/grafana
     ports:
@@ -57,8 +66,8 @@ services:
 
 volumes:
   postgres_data:
-  prometheus_data: # Keep stats after restart
-  grafana_data:    # Keep dashboards after restart
+  prometheus_data:
+  grafana_data:
 
 networks:
   prod:
