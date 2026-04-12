@@ -24,8 +24,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", default='somerandomkey')
 
 DEBUG = int(os.environ.get("DEBUG", default=0))
 
-ALLOWED_HOSTS = ['3.6.234.241', 'localhost', '127.0.0.1']
-
+# This allows requests from your AWS IP and the internal Docker network
+ALLOWED_HOSTS = ['3.6.234.241', 'backend', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
 ]
-
+# Bottom of settings.py
+PROMETHEUS_EXPORT_MIGRATIONS = True
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
