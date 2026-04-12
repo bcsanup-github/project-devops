@@ -1,8 +1,8 @@
-FROM python:3.8.8-slim
+FROM python:3.11-slim-bullseye
 
 WORKDIR /usr/src/app
 
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
