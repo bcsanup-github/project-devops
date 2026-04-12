@@ -6,7 +6,7 @@ function App() {
   const [data, setData] = useState([]);
 
   // Change this to your EC2 Public IP or "/" if using Nginx proxy
-  const API_URL = "http://13.233.113.51:8000/api/status/"; 
+  const API_URL = "http://3.6.234.241:8000/api/status/"; 
 
   useEffect(() => {
     fetch(API_URL)

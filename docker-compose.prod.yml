@@ -9,6 +9,8 @@ services:
       - POSTGRES_DB=django_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres_password
+    networks:
+      - prod
 
   backend:
     image: sanupdocker/my-devops-backend:latest
@@ -19,6 +21,8 @@ services:
       - db
     environment:
       - DATABASE_URL=postgres://postgres:postgres_password@db:5432/django_db
+    networks:
+      - prod
 
   frontend:
     image: sanupdocker/my-devops-frontend:latest
@@ -26,6 +30,35 @@ services:
       - "80:80"
     depends_on:
       - backend
+    networks:
+      - prod
+
+  # --- MONITORING SERVICES ---
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - prod
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - prod
+    depends_on:
+      - prometheus
 
 volumes:
   postgres_data:
+  prometheus_data: # Keep stats after restart
+  grafana_data:    # Keep dashboards after restart
+
+networks:
+  prod:
