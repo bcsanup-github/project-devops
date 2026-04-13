@@ -14,4 +14,6 @@ RUN pip install -r requirements/local.txt
 
 COPY . .
 
+RUN chmod +x /usr/src/app/entrypoint.sh
+
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
