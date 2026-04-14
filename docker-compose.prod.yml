@@ -12,10 +12,11 @@ services:
   backend:
     image: sanupdocker/my-devops-backend:latest
     container_name: ubuntu-backend-1
-    build: ./backend
-    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - ./backend:/usr/src/app
+    environment:
+      - DATABASE=postgres
+      - SQL_HOST=db
+      - SQL_PORT=5432
+      - DJANGO_SETTINGS_MODULE=core.settings  # Ensure this matches your project
     ports:
       - "8000:8000"
     depends_on:
@@ -24,9 +25,6 @@ services:
   frontend:
     image: sanupdocker/my-devops-frontend:latest
     container_name: ubuntu-frontend-1
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
     ports:
       - "80:80"
     depends_on:
@@ -35,8 +33,6 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: ubuntu-prometheus-1
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 

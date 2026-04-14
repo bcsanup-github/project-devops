@@ -1,30 +1,32 @@
-# 1. Use a standard Python image
 FROM python:3.11-slim
 
-# 2. Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# 3. Set the working directory inside the container
 WORKDIR /app
 
-# 4. Install system dependencies (CRITICAL for PostgreSQL/psycopg2)
+# Install system dependencies (added netcat for the entrypoint script)
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libpq-dev \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# 5. Copy the requirements folder from your computer to the container
-# This ensures 'requirements/production.txt' actually exists for pip to find
 COPY requirements/ ./requirements/
-
-# 6. Install the Python dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements/production.txt
 
-# 7. Copy the rest of your backend code
 COPY . .
 
-# 8. Run the application (Make sure this path matches your project!)
-CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
+# --- FIX START ---
+# Copy the production entrypoint and rename it to entrypoint.sh inside the image
+COPY ./entrypoint.prod.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Tell Docker to use this script
+ENTRYPOINT ["/app/entrypoint.sh"]
+# --- FIX END ---
+
+# This remains as the default command passed to the entrypoint
+CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
