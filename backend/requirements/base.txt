@@ -1,4 +1,4 @@
 Django==3.1.7
 psycopg2-binary==2.9.9
 django-prometheus
-django-cors-headers==4.3.1
+django-cors-headers
