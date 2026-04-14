@@ -12,11 +12,12 @@ services:
   backend:
     image: sanupdocker/my-devops-backend:latest
     container_name: ubuntu-backend-1
+    restart: always
     environment:
       - DATABASE=postgres
       - SQL_HOST=db
       - SQL_PORT=5432
-      - DJANGO_SETTINGS_MODULE=core.settings  # Ensure this matches your project
+      - DJANGO_SETTINGS_MODULE=app.settings.production  # Ensure this matches your project
     ports:
       - "8000:8000"
     depends_on:
