@@ -1,11 +1,11 @@
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies (added netcat for the entrypoint script)
+# Install dependencies including netcat for the entrypoint script
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
@@ -13,20 +13,19 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy the requirements folder
 COPY requirements/ ./requirements/
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements/production.txt
 
+# Copy the rest of the code
 COPY . .
 
-# --- FIX START ---
-# Copy the production entrypoint and rename it to entrypoint.sh inside the image
+# Setup the production entrypoint
 COPY ./entrypoint.prod.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Tell Docker to use this script
 ENTRYPOINT ["/app/entrypoint.sh"]
-# --- FIX END ---
 
-# This remains as the default command passed to the entrypoint
-CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Use core.wsgi or app.wsgi depending on your folder name
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
