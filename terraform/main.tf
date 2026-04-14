@@ -91,16 +91,22 @@ resource "aws_security_group" "web_sg" {
 }
 
 # 7. The EC2 Instance
+# 7. The EC2 Instance
 resource "aws_instance" "devops_server" {
   ami                    = "ami-007020fd9c84e18c7" 
   instance_type          = "t2.micro"             
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
-  key_name               = "my-key" # Ensure this matches your AWS .pem key name!
+  key_name               = "my-key"
+
+  # ADD THIS BLOCK BELOW
+  root_block_device {
+    volume_size = 25
+    volume_type = "gp3" # gp3 is faster and cheaper than the default gp2
+  }
 
   tags = { Name = "DevOps-Project-Server" }
 }
-
 # 8. THE ELASTIC IP (The Permanent Address)
 resource "aws_eip" "my_static_ip" {
   instance = aws_instance.devops_server.id

@@ -1,22 +1,16 @@
 ###########
 # BUILDER #
 ###########
-# 1. Change from node:18 to node:16
-FROM node:16-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
-
-# 2. Keep this to ignore warnings
 ENV CI=false
 
 COPY package.json package-lock.json ./
-
-# 3. Use 'install' with the legacy flag to skip version arguments
+# Use --legacy-peer-deps to handle older react-scripts conflicts
 RUN npm install --legacy-peer-deps
 
 COPY . .
-
-# 4. Run the build
 RUN npm run build
 
 #########
@@ -24,12 +18,11 @@ RUN npm run build
 #########
 FROM nginx:stable-alpine
 
-# Double-check: if this fails, try changing 'dist' to 'build'
+# Copy the build folder (Vite uses 'dist', Create React App uses 'build')
 COPY --from=builder /app/build /usr/share/nginx/html
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
