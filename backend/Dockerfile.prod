@@ -28,4 +28,4 @@ RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Use core.wsgi or app.wsgi depending on your folder name
-CMD [gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120]
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
