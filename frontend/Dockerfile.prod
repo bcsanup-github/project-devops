@@ -1,13 +1,12 @@
 ###########
 # BUILDER #
 ###########
-FROM node:20-alpine AS builder
+FROM node:16-slim AS builder
 
 WORKDIR /app
 ENV CI=false
 
 COPY package.json package-lock.json ./
-# Use --legacy-peer-deps to handle older react-scripts conflicts
 RUN npm install --legacy-peer-deps
 
 COPY . .
@@ -18,7 +17,7 @@ RUN npm run build
 #########
 FROM nginx:stable-alpine
 
-# Copy the build folder (Vite uses 'dist', Create React App uses 'build')
+# Verify if your project builds to 'build' or 'dist'
 COPY --from=builder /app/build /usr/share/nginx/html
 
 RUN rm /etc/nginx/conf.d/default.conf

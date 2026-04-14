@@ -1,73 +1,50 @@
-
-
 services:
   db:
     image: postgres:15-alpine
     container_name: ubuntu-db-1
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=django_db
+      - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres_password
-    networks:
-      - prod
+      - POSTGRES_PASSWORD=postgres
 
   backend:
     image: sanupdocker/my-devops-backend:latest
     container_name: ubuntu-backend-1
-    # FIX 1: Map the port so AWS can talk to the container
+    build: ./backend
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./backend:/usr/src/app
     ports:
       - "8000:8000"
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
     depends_on:
       - db
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres_password@db:5432/django_db
-      # FIX 2: Tell Django it's okay to receive requests from your Elastic IP
-      - DJANGO_ALLOWED_HOSTS=3.6.234.241 localhost 127.0.0.1
-    networks:
-      - prod
 
   frontend:
     image: sanupdocker/my-devops-frontend:latest
     container_name: ubuntu-frontend-1
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
     ports:
       - "80:80"
     depends_on:
       - backend
-    networks:
-      - prod
 
   prometheus:
     image: prom/prometheus:latest
     container_name: ubuntu-prometheus-1
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
-    networks:
-      - prod
 
   grafana:
     image: grafana/grafana:latest
     container_name: ubuntu-grafana-1
-    volumes:
-      - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
-    networks:
-      - prod
-    depends_on:
-      - prometheus
 
 volumes:
   postgres_data:
-  prometheus_data:
-  grafana_data:
-
-networks:
-  prod:
