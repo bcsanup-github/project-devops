@@ -91,7 +91,7 @@ resource "aws_security_group" "web_sg" {
 }
 
 # 7. The EC2 Instance
-# 7. The EC2 Instance
+
 resource "aws_instance" "devops_server" {
   ami                    = "ami-007020fd9c84e18c7" 
   instance_type          = "t2.micro"             
@@ -99,10 +99,10 @@ resource "aws_instance" "devops_server" {
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   key_name               = "my-key"
 
-  # ADD THIS BLOCK BELOW
+  
   root_block_device {
     volume_size = 25
-    volume_type = "gp3" # gp3 is faster and cheaper than the default gp2
+    volume_type = "gp3" 
   }
 
   tags = { Name = "DevOps-Project-Server" }

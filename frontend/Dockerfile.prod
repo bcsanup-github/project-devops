@@ -1,6 +1,4 @@
-###########
-# BUILDER #
-###########
+
 FROM node:16-slim AS builder
 
 WORKDIR /app
@@ -12,12 +10,10 @@ RUN npm install --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-#########
-# FINAL #
-#########
+
 FROM nginx:stable-alpine
 
-# Verify if your project builds to 'build' or 'dist'
+
 COPY --from=builder /app/build /usr/share/nginx/html
 
 RUN rm /etc/nginx/conf.d/default.conf

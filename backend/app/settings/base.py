@@ -15,14 +15,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Third-party apps
-    'corsheaders',  # ADDED THIS
+
+    'corsheaders',  
     'django_prometheus',
 ]
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # ADDED THIS (Must be above CommonMiddleware)
+    'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -33,7 +33,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
-# ADD THESE CORS SETTINGS
+
 CORS_ALLOWED_ORIGINS = [
     "http://3.6.234.241",
     "http://localhost:3000",

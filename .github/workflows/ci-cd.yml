@@ -94,7 +94,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./backend/Dockerfile.prod  # FIXED: Pointing to prod file
+          file: ./backend/Dockerfile.prod   
           push: true
           tags: sanupdocker/my-devops-backend:latest
 
@@ -102,7 +102,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile.prod  # FIXED: Pointing to prod file
+          file: ./frontend/Dockerfile.prod  
           push: true
           tags: sanupdocker/my-devops-frontend:latest
 
