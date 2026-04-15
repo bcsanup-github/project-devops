@@ -10,7 +10,7 @@ def api_status(request):
     })
 
 urlpatterns = [
-    path('admin/', admin.site.urls), # Standard path: http://3.6.234.241:8000/admin/
+    path('admin/', admin.site.urls), # Standard path: http://35.154.88.133:8000/admin/
     path('api/status/', api_status, name='api_status'), 
     path('', include('django_prometheus.urls')),
 ]

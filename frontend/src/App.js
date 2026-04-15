@@ -6,7 +6,7 @@ function App() {
   const [data, setData] = useState([]);
 
   
-  const API_URL = "http://3.6.234.241:8000/api/status/"; 
+  const API_URL = "http://35.154.88.133:8000/api/status/"; 
 
   useEffect(() => {
     fetch(API_URL)
